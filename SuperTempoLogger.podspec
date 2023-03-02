@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
-  spec.name         = "MindboxLogger"
-  spec.version      = "0.0.2"
+  spec.name         = "SuperTempoLogger"
+  spec.version      = "0.0.3"
   spec.summary      = "SDK for integration notifications with"
   spec.description  = "This library allows you to integrate notifications and transfer them to Mindbox Marketing Cloud"
   spec.homepage     = "https://github.com/Vailence/TempLoggerRepo"
