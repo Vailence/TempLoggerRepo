@@ -1,0 +1,54 @@
+{
+  "inapps": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "sdkVersion": {
+        "min": 1,
+        "max": null
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "sdkVersion": {
+        "min": 2,
+        "max": 4
+      },
+      "targeting": {
+        "nodes": [
+          {
+            "$type": "true"
+          }
+        ],
+        "$type": "and"
+      },
+      "form": {
+        "variants": [
+          {
+            "imageUrl": "https://s3-symbol-logo.tradingview.com/true-corporation-public-company-limited--600.png",
+            "redirectUrl": "",
+            "intentPayload": "",
+            "$type": "simpleImage"
+          }
+        ]
+      }
+    }
+  ]
+}
