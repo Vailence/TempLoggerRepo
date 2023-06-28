@@ -37,18 +37,29 @@ public class Logger {
         )
     }
     
-    public static func error(_ error: String,
-                      level: LogLevel = .error,
-                      category: LogCategory = .network,
-                      fileName: String = #file,
-                      line: Int = #line,
-                      funcName: String = #function
-    ) {
+    public static func error(_ error: LoggerErrorModel,
+                             level: LogLevel = .error,
+                             category: LogCategory = .network,
+                             fileName: String = #file,
+                             line: Int = #line,
+                             funcName: String = #function) {
         var logMessage: String = ""
-    }
-    
-    public static func asd() {
-        print("Hello world 2")
+        logMessage = logMessage + "\n[\(error.errorType.rawValue) error: \(error.description ?? "No description")]"
+        if let status = error.status {
+            logMessage = logMessage + "\n[status: \(status)]"
+        }
+        
+        if let statusCode = error.statusCode {
+            logMessage = logMessage + "\n[httpStatusCode: \(statusCode)]"
+        }
+        
+        if logMessage.isEmpty { return }
+
+        let message = "LogManager: \n--- Error --- \(String(describing: logMessage)) \n--- End ---\n"
+        
+        let meta: Meta = (fileName, line, funcName)
+        let borders: Borders = ("", "\n")
+        log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
     }
     
     public static func network(request: URLRequest,
