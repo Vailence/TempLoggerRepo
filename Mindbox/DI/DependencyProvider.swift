@@ -3,7 +3,7 @@
 //  Mindbox
 //
 //  Created by Mikhail Barilov on 13.01.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import CoreData
@@ -22,6 +22,9 @@ final class DependencyProvider: DependencyContainer {
     let inAppTargetingChecker: InAppTargetingChecker
     let inAppMessagesManager: InAppCoreManagerProtocol
     let uuidDebugService: UUIDDebugService
+    var sessionTemporaryStorage: SessionTemporaryStorage
+    var inappMessageEventSender: InappMessageEventSender
+    let imageDownloader: ImageDownloader
 
     init() throws {
         utilitiesFetcher = MBUtilitiesFetcher()
@@ -43,6 +46,8 @@ final class DependencyProvider: DependencyContainer {
         authorizationStatusProvider = UNAuthorizationStatusProvider()
         sessionManager = SessionManager(trackVisitManager: instanceFactory.makeTrackVisitManager())
         let logsManager = SDKLogsManager(persistenceStorage: persistenceStorage, eventRepository: instanceFactory.makeEventRepository())
+        sessionTemporaryStorage = SessionTemporaryStorage()
+        imageDownloader = URLSessionImageDownloader(persistenceStorage: persistenceStorage)
         inAppMessagesManager = InAppCoreManager(
             configManager: InAppConfigurationManager(
                 inAppConfigAPI: InAppConfigurationAPI(persistenceStorage: persistenceStorage),
@@ -50,13 +55,20 @@ final class DependencyProvider: DependencyContainer {
                 inAppConfigurationMapper: InAppConfigutationMapper(customerSegmentsAPI: .live,
                                                                    inAppsVersion: inAppsSdkVersion,
                                                                    targetingChecker: inAppTargetingChecker,
-                                                                   networkFetcher: instanceFactory.makeNetworkFetcher()), logsManager: logsManager),
+                                                                   networkFetcher: instanceFactory.makeNetworkFetcher(),
+                                                                   sessionTemporaryStorage: sessionTemporaryStorage,
+                                                                   persistenceStorage: persistenceStorage,
+                                                                   imageDownloader: imageDownloader),
+                logsManager: logsManager, sessionStorage: sessionTemporaryStorage),
             presentationManager: InAppPresentationManager(
-                imagesStorage: InAppImagesStorage(),
                 inAppTracker: InAppMessagesTracker(databaseRepository: databaseRepository)
             ),
-            persistenceStorage: persistenceStorage
+            persistenceStorage: persistenceStorage,
+            sessionStorage: sessionTemporaryStorage
         )
+        inappMessageEventSender = InappMessageEventSender(inAppMessagesManager: inAppMessagesManager,
+                                                          sessionStorage: sessionTemporaryStorage)
+
         uuidDebugService = PasteboardUUIDDebugService(
             notificationCenter: NotificationCenter.default,
             currentDateProvider: { return Date() },

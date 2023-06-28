@@ -3,7 +3,7 @@
 //  Mindbox
 //
 //  Created by Maksim Kazachkov on 22.03.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation
@@ -20,6 +20,9 @@ protocol DependencyContainer {
     var inAppTargetingChecker: InAppTargetingChecker { get }
     var inAppMessagesManager: InAppCoreManagerProtocol { get }
     var uuidDebugService: UUIDDebugService { get }
+    var sessionTemporaryStorage: SessionTemporaryStorage { get }
+    var inappMessageEventSender: InappMessageEventSender { get }
+    var imageDownloader: ImageDownloader { get }
 }
 
 protocol InstanceFactory {

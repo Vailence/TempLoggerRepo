@@ -3,7 +3,7 @@
 //  Mindbox
 //
 //  Created by Mikhail Barilov on 13.01.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation
@@ -46,6 +46,15 @@ class CoreController {
     func apnsTokenDidUpdate(token: String) {
         controllerQueue.async {
             let isNotificationsEnabled = self.notificationStatus()
+            
+            if self.persistenceStorage.needUpdateInfoOnce ?? true {
+                self.updateInfo(apnsToken: token, isNotificationsEnabled: isNotificationsEnabled)
+                self.persistenceStorage.isNotificationsEnabled = isNotificationsEnabled
+                self.persistenceStorage.apnsToken = token
+                self.persistenceStorage.needUpdateInfoOnce = false
+                return
+            }
+            
             if self.persistenceStorage.isInstalled {
                 self.updateInfo(
                     apnsToken: token,
@@ -141,6 +150,7 @@ class CoreController {
         let newVersion = 0 // Variable from an older version of this framework
         persistenceStorage.deviceUUID = deviceUUID
         persistenceStorage.installationId = configuration.previousInstallationId
+        persistenceStorage.imageLoadingMaxTimeInSeconds = configuration.imageLoadingMaxTimeInSeconds
         let apnsToken = persistenceStorage.apnsToken
         let isNotificationsEnabled = notificationStatus()
         let instanceId = UUID().uuidString

@@ -78,6 +78,10 @@ public class Logger {
         log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
     }
     
+    public static func asd() {
+        print("Hello world")
+    }
+    
     public static func network(request: URLRequest,
                         httpAdditionalHeaders: [AnyHashable: Any]? = nil,
                         fileName: String = #file,

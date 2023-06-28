@@ -3,10 +3,11 @@
 //  MindboxTests
 //
 //  Created by Maksim Kazachkov on 03.02.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation
+import MindboxLogger
 @testable import Mindbox
 
 class MockNetworkFetcher: NetworkFetcher {

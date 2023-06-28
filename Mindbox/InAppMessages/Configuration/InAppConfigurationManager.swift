@@ -17,10 +17,8 @@ protocol InAppConfigurationManagerProtocol: AnyObject {
     var delegate: InAppConfigurationDelegate? { get set }
 
     func prepareConfiguration()
-
-    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppsCheckRequest?
-
-    func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData?
+    func getInapp() -> InAppFormData?
+    func recalculateInapps(with event: ApplicationEvent)
 }
 
 /// Prepares in-apps configation (loads from network, stores in cache, cache invalidation).
@@ -29,22 +27,26 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     
     private let jsonDecoder = JSONDecoder()
     private let queue = DispatchQueue(label: "com.Mindbox.configurationManager")
-    private var configuration: InAppConfig!
+    private var inapp: InAppFormData?
+    private var rawConfigurationResponse: InAppConfigResponse!
     private let inAppConfigRepository: InAppConfigurationRepository
     private let inAppConfigurationMapper: InAppConfigutationMapper
     private let inAppConfigAPI: InAppConfigurationAPI
     private let logsManager: SDKLogsManagerProtocol
+    private let sessionStorage: SessionTemporaryStorage
 
     init(
         inAppConfigAPI: InAppConfigurationAPI,
         inAppConfigRepository: InAppConfigurationRepository,
         inAppConfigurationMapper: InAppConfigutationMapper,
-        logsManager: SDKLogsManagerProtocol
+        logsManager: SDKLogsManagerProtocol,
+        sessionStorage: SessionTemporaryStorage
     ) {
         self.inAppConfigRepository = inAppConfigRepository
         self.inAppConfigurationMapper = inAppConfigurationMapper
         self.inAppConfigAPI = inAppConfigAPI
         self.logsManager = logsManager
+        self.sessionStorage = sessionStorage
     }
 
     weak var delegate: InAppConfigurationDelegate?
@@ -55,43 +57,23 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
         }
     }
 
-    func buildInAppRequest(event: InAppMessageTriggerEvent) -> InAppsCheckRequest? {
-        queue.sync {
-            guard let configuration = configuration,
-                  let inAppInfos = configuration.inAppsByEvent[event],
-                  !inAppInfos.isEmpty
-            else { return nil }
-
-            return InAppsCheckRequest(
-                triggerEvent: event,
-                possibleInApps: inAppInfos.map {
-                    InAppsCheckRequest.InAppInfo(
-                        inAppId: $0.id
-                    )
-                }
-            )
+    func getInapp() -> InAppFormData? {
+        return queue.sync {
+            defer {
+                inapp = nil
+            }
+            
+            return inapp
         }
     }
-
-    func getInAppFormData(by inAppResponse: InAppResponse) -> InAppFormData? {
+    
+    func recalculateInapps(with event: ApplicationEvent) {
         queue.sync {
-            guard let inApps = configuration.inAppsByEvent[inAppResponse.triggerEvent],
-                  let inApp = inApps.first(where: { $0.id == inAppResponse.inAppToShowId }),
-                  inApp.formDataVariants.count > 0
-            else {
-                return nil
+            guard let rawConfigurationResponse = rawConfigurationResponse else {
+                return
             }
-            let formData = inApp.formDataVariants[0]
-            guard let imageUrl = URL(string: formData.imageUrl) else {
-                Logger.common(message: "Inapps image url is incorrect. [URL]: \(formData.imageUrl)", level: .debug, category: .inAppMessages)
-                return nil
-            }
-            return InAppFormData(
-                inAppId: inApp.id,
-                imageUrl: imageUrl,
-                redirectUrl: formData.redirectUrl,
-                intentPayload: formData.intentPayload
-            )
+            
+            setConfigPrepared(rawConfigurationResponse, event: event)
         }
     }
 
@@ -109,15 +91,17 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
                 let config = try jsonDecoder.decode(InAppConfigResponse.self, from: data)
                 saveConfigToCache(data)
                 setConfigPrepared(config)
-                guard let monitoring = config.monitoring else { return }
-                logsManager.sendLogs(logs: monitoring.logs)
+                setupSettingsFromConfig(config.settings)
+                if let monitoring = config.monitoring {
+                    logsManager.sendLogs(logs: monitoring.logs)
+                }
             } catch {
                 applyConfigFromCache()
                 Logger.common(message: "Failed to parse downloaded config file. Error: \(error)", level: .error, category: .inAppMessages)
             }
 
         case .empty:
-            let emptyConfig = InAppConfigResponse.init(inapps: [], monitoring: .init(logs: []))
+            let emptyConfig = InAppConfigResponse.init(inapps: [], monitoring: nil, settings: nil)
             inAppConfigRepository.clean()
             setConfigPrepared(emptyConfig)
 
@@ -150,15 +134,27 @@ class InAppConfigurationManager: InAppConfigurationManagerProtocol {
     private func saveConfigToCache(_ data: Data) {
         inAppConfigRepository.saveConfigToCache(data)
     }
-
-    private func setConfigPrepared(_ configResponse: InAppConfigResponse) {
-        inAppConfigurationMapper.mapConfigResponse(configResponse, { config in
-            self.configuration = config
-            var configDump = String()
-            dump(self.configuration!, to: &configDump)
-            Logger.common(message: "InApps Configuration applied: \n\(configDump)", level: .debug, category: .inAppMessages)
-            
+    
+    private func setConfigPrepared(_ configResponse: InAppConfigResponse, event: ApplicationEvent? = nil) {
+        rawConfigurationResponse = configResponse
+        inAppConfigurationMapper.mapConfigResponse(event, configResponse, { inapp in
+            self.inapp = inapp
+            Logger.common(message: "In-app сonfiguration applied: \n\(String(describing: inapp))", level: .debug, category: .inAppMessages)
             self.delegate?.didPreparedConfiguration()
         })
+    }
+    
+    private func setupSettingsFromConfig(_ settings: InAppConfigResponse.Settings?) {
+        guard let settings = settings else {
+            return
+        }
+        
+        if let viewCategory = settings.operations?.viewCategory {
+            sessionStorage.operationsFromSettings.insert(viewCategory.systemName.lowercased())
+        }
+
+        if let viewProduct = settings.operations?.viewProduct {
+            sessionStorage.operationsFromSettings.insert(viewProduct.systemName.lowercased())
+        }
     }
 }

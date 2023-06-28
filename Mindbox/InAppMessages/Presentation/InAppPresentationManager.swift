@@ -16,7 +16,7 @@ struct InAppMessageUIModel {
         let payload: String
     }
     let inAppId: String
-    let imageData: Data
+    let image: UIImage
     let redirect: InAppRedirect
 }
 
@@ -32,6 +32,7 @@ protocol InAppPresentationManagerProtocol: AnyObject {
 
 enum InAppPresentationError {
     case failedToLoadImages
+    case failedToLoadWindow
 }
 
 typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
@@ -40,14 +41,11 @@ typealias InAppMessageTapAction = (_ tapLink: URL?, _ payload: String) -> Void
 final class InAppPresentationManager: InAppPresentationManagerProtocol {
 
     init(
-        imagesStorage: InAppImagesStorageProtocol,
         inAppTracker: InAppMessagesTrackerProtocol
     ) {
-        self.imagesStorage = imagesStorage
         self.inAppTracker = inAppTracker
     }
 
-    private let imagesStorage: InAppImagesStorageProtocol
     private let inAppTracker: InAppMessagesTrackerProtocol
     private var inAppWindow: UIWindow?
 
@@ -59,28 +57,25 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         onError: @escaping (InAppPresentationError) -> Void
     ) {
         clickTracked = false
-        imagesStorage.getImage(url: inAppFormData.imageUrl, completionQueue: .main) { imageData in
-            if let imageData = imageData {
-                let redirectInfo = InAppMessageUIModel.InAppRedirect(
-                    redirectUrl: URL(string: inAppFormData.redirectUrl),
-                    payload: inAppFormData.intentPayload
-                )
+        DispatchQueue.main.async {
+            let redirectInfo = InAppMessageUIModel.InAppRedirect(
+                redirectUrl: URL(string: inAppFormData.redirectUrl),
+                payload: inAppFormData.intentPayload
+            )
 
-                let inAppUIModel = InAppMessageUIModel(
-                    inAppId: inAppFormData.inAppId,
-                    imageData: imageData,
-                    redirect: redirectInfo
-                )
-                self.presentInAppUIModel(
-                    inAppUIModel: inAppUIModel,
-                    onPresented: onPresented,
-                    onTapAction: onTapAction,
-                    onPresentationCompleted: onPresentationCompleted
-                )
-            } else {
-                onError(.failedToLoadImages)
-                return
-            }
+            let inAppUIModel = InAppMessageUIModel(
+                inAppId: inAppFormData.inAppId,
+                image: inAppFormData.image,
+                redirect: redirectInfo
+            )
+            
+            self.presentInAppUIModel(
+                inAppUIModel: inAppUIModel,
+                onPresented: onPresented,
+                onTapAction: onTapAction,
+                onPresentationCompleted: onPresentationCompleted,
+                onError: onError
+            )
         }
     }
 
@@ -90,11 +85,17 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         inAppUIModel: InAppMessageUIModel,
         onPresented: @escaping () -> Void,
         onTapAction: @escaping InAppMessageTapAction,
-        onPresentationCompleted: @escaping () -> Void
+        onPresentationCompleted: @escaping () -> Void,
+        onError: @escaping (InAppPresentationError) -> Void
     ) {
-        Logger.common(message: "In-app with id \(inAppUIModel.inAppId) presented", level: .info, category: .inAppMessages)
+        guard let inAppWindow = makeInAppMessageWindow() else {
+            Logger.common(message: "InappWindow creating failed")
+            onError(.failedToLoadWindow)
+            return
+        }
+        
+        Logger.common(message: "InappWindow created Successfully")
 
-        let inAppWindow = makeInAppMessageWindow()
         let close: () -> Void = { [weak self] in
             self?.onClose(inApp: inAppUIModel, onPresentationCompleted)
         }
@@ -109,6 +110,7 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
             onClose: close
         )
         inAppWindow.rootViewController = inAppViewController
+        Logger.common(message: "In-app with id \(inAppUIModel.inAppId) presented", level: .info, category: .inAppMessages)
     }
 
     private func onPresented(inApp: InAppMessageUIModel, _ completion: @escaping () -> Void) {
@@ -152,16 +154,16 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
         completion()
     }
 
-    private func makeInAppMessageWindow() -> UIWindow {
-        let window: UIWindow
+    private func makeInAppMessageWindow() -> UIWindow? {
+        let window: UIWindow?
         if #available(iOS 13.0, *) {
             window = iOS13PlusWindow
         } else {
             window = UIWindow(frame: UIScreen.main.bounds)
         }
         self.inAppWindow = window
-        window.windowLevel = UIWindow.Level.normal
-        window.isHidden = false
+        window?.windowLevel = UIWindow.Level.normal
+        window?.isHidden = false
         return window
     }
 
@@ -172,12 +174,13 @@ final class InAppPresentationManager: InAppPresentationManagerProtocol {
                 return windowScene
             }
         }
+    
         return nil
     }
 
     @available(iOS 13.0, *)
-    private var iOS13PlusWindow: UIWindow {
-        if let foregroundedScene = foregroundedScene, foregroundedScene.delegate != nil {
+    private var iOS13PlusWindow: UIWindow? {
+        if let foregroundedScene = foregroundedScene {
             return UIWindow(windowScene: foregroundedScene)
         } else {
             return UIWindow(frame: UIScreen.main.bounds)

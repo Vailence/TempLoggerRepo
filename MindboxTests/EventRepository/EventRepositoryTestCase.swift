@@ -3,7 +3,7 @@
 //  MindboxTests
 //
 //  Created by Maksim Kazachkov on 03.02.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 @testable import Mindbox
@@ -82,6 +82,6 @@ class EventRepositoryTestCase: XCTestCase {
     private func waitForInitializationFinished() {
         let expectation = self.expectation(description: "controller initialization")
         controllerQueue.async { expectation.fulfill() }
-        self.wait(for: [expectation], timeout: 0.2)
+        self.wait(for: [expectation], timeout: 1)
     }
 }

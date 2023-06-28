@@ -3,7 +3,7 @@
 //  MindboxTests
 //
 //  Created by Mikhail Barilov on 29.01.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation
@@ -79,6 +79,8 @@ class MockPersistenceStorage: PersistenceStorage {
     var shownInAppsIds: [String]?
     
     var handledlogRequestIds: [String]?
+    
+    var imageLoadingMaxTimeInSeconds: Double?
 
     func reset() {
         installationDate = nil
@@ -105,6 +107,10 @@ class MockPersistenceStorage: PersistenceStorage {
         
     }
     
-    
+    var needUpdateInfoOnce: Bool? {
+        didSet {
+            onDidChange?()
+        }
+    }
 
 }

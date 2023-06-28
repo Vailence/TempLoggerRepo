@@ -3,7 +3,7 @@
 //  Mindbox
 //
 //  Created by Maksim Kazachkov on 01.03.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation
@@ -22,18 +22,27 @@ class DataBaseLoader {
     init(persistentStoreDescriptions: [NSPersistentStoreDescription]? = nil, applicationGroupIdentifier: String? = nil) throws {
         MBPersistentContainer.applicationGroupIdentifier = applicationGroupIdentifier
         let momdName = Constants.Database.mombName
+        var modelURL: URL?
 
         #if SWIFT_PACKAGE
-        guard let modelURL = Bundle.module.url(forResource: momdName, withExtension: "momd") else {
-            Logger.common(message: MBDatabaseError.unableCreateDatabaseModel.errorDescription, level: .error, category: .database)
-            throw MBDatabaseError.unableCreateDatabaseModel
+        if let modelURLSwift = Bundle.module.url(forResource: momdName, withExtension: "momd") {
+            modelURL = modelURLSwift
         }
         #else
-        guard let modelURL = Bundle(for: DataBaseLoader.self).url(forResource: momdName, withExtension: "momd") else {
+
+        if let podBundle = Bundle(for: DataBaseLoader.self).url(forResource: "Mindbox", withExtension: "bundle"),
+           let modelURLPod = Bundle(url: podBundle)?.url(forResource: momdName, withExtension: "momd") {
+            modelURL = modelURLPod
+        } else if let modelURLAdditional = Bundle(for: DataBaseLoader.self).url(forResource: momdName, withExtension: "momd") {
+            modelURL = modelURLAdditional
+        }
+
+        #endif
+        
+        guard let modelURL = modelURL else {
             Logger.common(message: MBDatabaseError.unableCreateDatabaseModel.errorDescription, level: .error, category: .database)
             throw MBDatabaseError.unableCreateDatabaseModel
         }
-        #endif
 
         guard let managedObjectModel = NSManagedObjectModel(contentsOf: modelURL) else {
             Logger.common(message: MBDatabaseError.unableCreateManagedObjectModel(with: modelURL).errorDescription, level: .error, category: .database)

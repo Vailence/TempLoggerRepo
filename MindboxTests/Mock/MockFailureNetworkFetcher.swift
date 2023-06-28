@@ -3,24 +3,19 @@
 //  MindboxTests
 //
 //  Created by Maksim Kazachkov on 24.03.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation
+import MindboxLogger
 @testable import Mindbox
 
 class MockFailureNetworkFetcher: NetworkFetcher {
     
     init() {
-        //        print("failableRouteIndex: \(failableRouteIndex)")
-        //        print("RoutesCount: \(routesCount)")
     }
 
-    private var routesCount: Int = 0 {
-        didSet {
-            //            print("RoutesCount: \(routesCount)")
-        }
-    }
+    private var routesCount: Int = 0
     
     var failableRouteIndex = Int.random(in: 0...9)
     

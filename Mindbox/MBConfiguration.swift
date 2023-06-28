@@ -3,7 +3,7 @@
 //  Mindbox
 //
 //  Created by Mikhail Barilov on 13.01.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import Foundation
@@ -19,6 +19,7 @@ public struct MBConfiguration: Codable {
     public var previousDeviceUUID: String?
     public var subscribeCustomerIfCreated: Bool
     public var shouldCreateCustomer: Bool
+    public var imageLoadingMaxTimeInSeconds: Double?
     let uuidDebugEnabled: Bool
 
     /// Init with params
@@ -39,6 +40,7 @@ public struct MBConfiguration: Codable {
         previousDeviceUUID: String? = nil,
         subscribeCustomerIfCreated: Bool = false,
         shouldCreateCustomer: Bool = true,
+        imageLoadingMaxTimeInSeconds: Double? = nil,
         uuidDebugEnabled: Bool = true
     ) throws {
         self.endpoint = endpoint
@@ -76,6 +78,7 @@ public struct MBConfiguration: Codable {
         
         self.subscribeCustomerIfCreated = subscribeCustomerIfCreated
         self.shouldCreateCustomer = shouldCreateCustomer
+        self.imageLoadingMaxTimeInSeconds = imageLoadingMaxTimeInSeconds
         self.uuidDebugEnabled = uuidDebugEnabled
     }
 

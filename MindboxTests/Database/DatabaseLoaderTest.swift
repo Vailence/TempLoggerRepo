@@ -3,7 +3,7 @@
 //  MindboxTests
 //
 //  Created by Maksim Kazachkov on 07.04.2021.
-//  Copyright © 2021 Mikhail Barilov. All rights reserved.
+//  Copyright © 2021 Mindbox. All rights reserved.
 //
 
 import XCTest
@@ -11,7 +11,7 @@ import CoreData
 @testable import Mindbox
 
 class DatabaseLoaderTest: XCTestCase {
-    
+
     var persistentContainer: NSPersistentContainer {
         container.databaseRepository.persistentContainer
     }

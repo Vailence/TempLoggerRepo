@@ -25,8 +25,14 @@ final class InAppImageOnlyView: UIView {
     }
 
     func customInit() {
-        let bundle = Bundle(for: InAppImageOnlyView.self)
-        let image = UIImage(data: uiModel.imageData)
+        #if SWIFT_PACKAGE
+        let bundle = Bundle.module
+        #else
+        let podBundle: URL = Bundle(for: InAppImageOnlyView.self).url(forResource: "Mindbox", withExtension: "bundle") ?? URL(string: "")!
+        let bundle = Bundle(url: podBundle)
+        #endif
+        
+        let image = uiModel.image
         imageView.contentMode = .scaleAspectFill
         imageView.image = image
 
