@@ -62,6 +62,48 @@ public class Logger {
         log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
     }
     
+    @available(*, deprecated, message: "Method deprecated. Use error(_ error: LoggerErrorModel:) instead")
+    public static func error(_ error: MindboxError,
+                      level: LogLevel = .error,
+                      category: LogCategory = .network,
+                      fileName: String = #file,
+                      line: Int = #line,
+                      funcName: String = #function
+    ) {
+        var logMessage: String = ""
+
+        switch error {
+        case .validationError:
+            logMessage = logMessage + "\n[validationError: \(error.errorDescription ?? "No description")]"
+        case let .protocolError(e):
+            logMessage = logMessage + "\n[status: \(e.status)]"
+            logMessage = logMessage + "\n[responseError: \(error.errorDescription ?? "No description")]"
+            logMessage = logMessage + "\n[httpStatusCode: \(e.httpStatusCode)]"
+        case let .serverError(e):
+            logMessage = logMessage + "\n\(e.description)"
+        case let .internalError(e):
+            logMessage = logMessage + "\n[key: \(e.errorKey)]"
+            if let rawError = e.rawError {
+                logMessage = logMessage + "\n[message: \(rawError.localizedDescription)]"
+            }
+        case let .invalidResponse(e):
+            guard let e = e else { return }
+            logMessage = logMessage + "\n[response: \(String(describing: e))]"
+        case .connectionError:
+            logMessage = logMessage + "\n[connectionError]"
+        case let .unknown(e):
+            logMessage = logMessage + "\n[error: \(e.localizedDescription)]"
+        }
+
+        if logMessage.isEmpty { return }
+
+        let message = "LogManager: \n--- Error --- \(String(describing: logMessage)) \n--- End ---\n"
+        
+        let meta: Meta = (fileName, line, funcName)
+        let borders: Borders = ("", "\n")
+        log(message: message, level: .debug, category: .network, meta: meta, borders: borders)
+    }
+    
     public static func network(request: URLRequest,
                         httpAdditionalHeaders: [AnyHashable: Any]? = nil,
                         fileName: String = #file,
