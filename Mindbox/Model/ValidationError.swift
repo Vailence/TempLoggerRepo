@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MindboxLogger
 
 public struct ValidationError: Codable, CustomStringConvertible {
     public let status: Status
@@ -23,4 +24,13 @@ public struct ValidationMessage: Codable {
     public let message: String?
     /// Location of field
     public let location: String?
+}
+
+public enum Status: String, UnknownCodable {
+    case success = "Success"
+    case validationError = "ValidationError"
+    case protocolError = "ProtocolError"
+    case internalServerError = "InternalServerError"
+    case transactionAlreadyProcessed = "TransactionAlreadyProcessed"
+    case unknown
 }

@@ -27,7 +27,7 @@ class InAppConfigurationAPI {
                 errorKey: .invalidConfiguration,
                 reason: "Invalid domain. Domain is unreachable"
             ))
-            Logger.error(errorModel)
+//            // Logger.error(errorModel)
             completion(.error(errorModel))
             return
         }
@@ -55,7 +55,7 @@ class InAppConfigurationAPI {
     private func completeDownloadTask(_ data: Data?, response: URLResponse?, error: Error?) -> InAppConfigurationAPIResult {
         guard let httpResponse = response as? HTTPURLResponse else {
             let errorModel = MindboxError.connectionError
-            Logger.error(errorModel)
+            // Logger.error(errorModel)
             return .error(errorModel)
         }
         
@@ -70,7 +70,7 @@ class InAppConfigurationAPI {
             return .error(error)
         } else {
             let errorModel = MindboxError.invalidResponse(response)
-            Logger.error(errorModel)
+            // Logger.error(errorModel)
             return .error(errorModel)
         }
     }
